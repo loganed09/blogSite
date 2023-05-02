@@ -11,7 +11,7 @@ const aboutContent = 'Nulla aliquet enim tortor at auctor urna. Elementum nibh t
 const contactContent = 'Feugiat nisl pretium fusce id velit ut tortor pretium. Est ullamcorper eget nulla facilisi etiam. Nam libero justo laoreet sit amet cursus sit amet dictum. Lacinia at quis risus sed vulputate odio. Posuere urna nec tincidunt praesent semper feugiat. Non enim praesent elementum facilisis leo. Porttitor lacus luctus accumsan tortor posuere ac ut. Aliquet eget sit amet tellus cras adipiscing. Mattis ullamcorper velit sed ullamcorper morbi tincidunt. Nec feugiat in fermentum posuere urna nec tincidunt. Vitae nunc sed velit dignissim sodales ut eu. Lectus proin nibh nisl condimentum id venenatis a condimentum vitae. Ac turpis egestas integer eget aliquet nibh praesent tristique magna. Massa vitae tortor condimentum lacinia quis vel eros donec ac. Fermentum posuere urna nec tincidunt praesent. Pellentesque habitant morbi tristique senectus. Id interdum velit laoreet id donec.';
 
 
-const posts = [];
+//const posts = [];
 
 
 app.set('view engine', 'ejs');
@@ -37,9 +37,11 @@ const Post = mongoose.model('Post', postSchema)
 
 
 app.get('/', (req, res) => {
-    res.render('home', {
-        homeStartingContent: homeStartingContent,
-        posts :  posts})
+    Post.find({}).then((foundPosts) => {
+        res.render('home', {
+            homeStartingContent: homeStartingContent,
+            posts :  foundPosts})
+    })
 } )
 
 app.get('/about', (req, res) => {
@@ -55,24 +57,29 @@ app.get('/compose', (req, res) => {
 })
 
 app.post('/compose', (req, res) => {
-    const post = {
-        postTitle: req.body.postTitle,
-        postContent: req.body.postContent
-    };
-    posts.push(post);
-    res.redirect('/');
+    const post = new Post ({
+        title: req.body.postTitle,
+        content: req.body.postContent
+    });
+
+    post.save().then(() => {res.redirect('/')}).catch(err=>{console.log(err)});
 })
 
-app.get('/posts/:postName', (req, res) => {
+app.get('/posts/:postId', (req, res) => {
     const requestedTitle = _.lowerCase(req.params.postName);
-    posts.forEach( post => {
-        const storedTitle = post.postTitle;
-        const storedContent = post.postContent
+    const requestedPostId = req.params.postId;
 
-        if (_.lowerCase(storedTitle) === requestedTitle) {
-            res.render('post', {postTitle: storedTitle, postContent: storedContent})
-        }
-    })
+    Post.findOne({_id: requestedPostId}).then((post) => {
+        res.render("post", {title: post.title, content: post.content})
+    }).catch(err=>{console.log(err)});
+    // posts.forEach( post => {
+    //     const storedTitle = post.title;
+    //     const storedContent = post.content
+
+    //     if (_.lowerCase(storedTitle) === requestedTitle) {
+    //         res.render('post', {postTitle: storedTitle, postContent: storedContent})
+    //     }
+    // })
    
 })
 
